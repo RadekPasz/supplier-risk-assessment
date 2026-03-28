@@ -60,6 +60,3 @@ Document your own experience here: what you asked the agent to scaffold, where y
 | GET | `/api/risk-summary` | Suppliers sorted by risk (desc) |
 | POST | `/api/chat` | `{ "message", "supplier_id?" }` |
 
-## License
-
-Prototype for evaluation — not production-hardened.

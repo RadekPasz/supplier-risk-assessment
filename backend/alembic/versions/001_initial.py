@@ -19,13 +19,19 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.execute(
-        "CREATE TYPE suppliertier AS ENUM ('critical', 'high', 'medium', 'low')"
+    bind = op.get_bind()
+
+    suppliertier = postgresql.ENUM(
+        "critical", "high", "medium", "low", name="suppliertier", create_type=False
     )
-    op.execute(
-        "CREATE TYPE supplierstatus AS ENUM ('active', 'pending', 'archived')"
+    supplierstatus = postgresql.ENUM(
+        "active", "pending", "archived", name="supplierstatus", create_type=False
     )
-    op.execute("CREATE TYPE answerchoice AS ENUM ('yes', 'partial', 'no')")
+    answerchoice = postgresql.ENUM("yes", "partial", "no", name="answerchoice", create_type=False)
+
+    suppliertier.create(bind, checkfirst=True)
+    supplierstatus.create(bind, checkfirst=True)
+    answerchoice.create(bind, checkfirst=True)
 
     op.create_table(
         "suppliers",
@@ -33,17 +39,9 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("website", sa.String(length=512), nullable=True),
-        sa.Column(
-            "tier",
-            sa.Enum("critical", "high", "medium", "low", name="suppliertier", create_type=False),
-            nullable=False,
-        ),
+        sa.Column("tier", suppliertier, nullable=False),
         sa.Column("risk_score", sa.Float(), nullable=False),
-        sa.Column(
-            "status",
-            sa.Enum("active", "pending", "archived", name="supplierstatus", create_type=False),
-            nullable=False,
-        ),
+        sa.Column("status", supplierstatus, nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
         sa.PrimaryKeyConstraint("id"),
@@ -65,11 +63,7 @@ def upgrade() -> None:
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("supplier_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("question_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column(
-            "answer",
-            sa.Enum("yes", "partial", "no", name="answerchoice", create_type=False),
-            nullable=False,
-        ),
+        sa.Column("answer", answerchoice, nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
         sa.ForeignKeyConstraint(["question_id"], ["assessment_questions.id"], ondelete="CASCADE"),
@@ -97,6 +91,6 @@ def downgrade() -> None:
     op.drop_table("assessment_questions")
     op.drop_index(op.f("ix_suppliers_name"), table_name="suppliers")
     op.drop_table("suppliers")
-    op.execute("DROP TYPE answerchoice")
-    op.execute("DROP TYPE supplierstatus")
-    op.execute("DROP TYPE suppliertier")
+    op.execute("DROP TYPE IF EXISTS answerchoice")
+    op.execute("DROP TYPE IF EXISTS supplierstatus")
+    op.execute("DROP TYPE IF EXISTS suppliertier")

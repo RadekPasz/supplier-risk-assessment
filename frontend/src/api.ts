@@ -8,10 +8,24 @@ import type {
   SupplierTier,
 } from './types'
 
+function errorFromResponseBody(text: string, status: string): Error {
+  try {
+    const j = JSON.parse(text) as { detail?: string | { msg: string }[] }
+    if (typeof j.detail === 'string') return new Error(j.detail)
+    if (Array.isArray(j.detail)) {
+      const parts = j.detail.map((x) => (typeof x === 'object' && x && 'msg' in x ? (x as { msg: string }).msg : String(x)))
+      return new Error(parts.join(' '))
+    }
+  } catch {
+    /* not JSON */
+  }
+  return new Error(text || status)
+}
+
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const t = await res.text()
-    throw new Error(t || res.statusText)
+    throw errorFromResponseBody(t, res.statusText)
   }
   return res.json() as Promise<T>
 }

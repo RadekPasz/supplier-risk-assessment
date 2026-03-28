@@ -112,8 +112,16 @@ def search_uploaded_documents(query: str, supplier_id: str | None = None) -> str
     """Semantic search over uploaded supplier documents. Pass supplier_id to scope to one vendor."""
     from uuid import UUID
 
-    uid = UUID(supplier_id) if supplier_id else None
-    docs = search_document_chunks(query, supplier_id=uid, k=6)
+    uid = None
+    if supplier_id and str(supplier_id).strip():
+        try:
+            uid = UUID(str(supplier_id).strip())
+        except ValueError:
+            return f"Invalid supplier_id for document search: {supplier_id!r}"
+    try:
+        docs = search_document_chunks(query, supplier_id=uid, k=6)
+    except Exception as e:
+        return f"Document search failed (embeddings/index): {e}"
     if not docs:
         return "No relevant document chunks found."
     parts: list[str] = []
