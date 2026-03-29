@@ -78,6 +78,14 @@ export async function updateSupplier(
   return json<Supplier>(res)
 }
 
+export async function deleteSupplier(id: string): Promise<void> {
+  const res = await fetch(`/api/suppliers/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const t = await res.text()
+    throw errorFromResponseBody(t, res.statusText)
+  }
+}
+
 export async function fetchQuestions(supplierId: string): Promise<Question[]> {
   const res = await fetch(`/api/suppliers/${supplierId}/questions`)
   return json<Question[]>(res)
