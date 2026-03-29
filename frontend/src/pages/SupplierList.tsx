@@ -14,10 +14,10 @@ export default function SupplierList() {
   const [rows, setRows] = useState<Supplier[]>([])
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm] = useState(true)
   const [name, setName] = useState('')
-  const [tier, setTier] = useState<SupplierTier>('medium')
-  const [status, setStatus] = useState<SupplierStatus>('pending')
+  const [tier, setTier] = useState<SupplierTier | ''>('')
+  const [status, setStatus] = useState<SupplierStatus | ''>('')
   const [editing, setEditing] = useState<Supplier | null>(null)
   const [editName, setEditName] = useState('')
   const [editTier, setEditTier] = useState<SupplierTier>('medium')
@@ -38,9 +38,15 @@ export default function SupplierList() {
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     setErr(null)
+    if (!tier || !status) {
+      setErr('Please select Tier and Status.')
+      return
+    }
     try {
       await createSupplier({ name, tier, status, description: null, website: null })
       setName('')
+      setTier('')
+      setStatus('')
       setShowForm(false)
       load()
     } catch (e: unknown) {
@@ -126,7 +132,15 @@ export default function SupplierList() {
           </div>
           <div className="form-field">
             <label htmlFor="new-tier">Tier</label>
-            <select id="new-tier" value={tier} onChange={(e) => setTier(e.target.value as SupplierTier)}>
+            <select
+              id="new-tier"
+              required
+              value={tier}
+              onChange={(e) => setTier(e.target.value as SupplierTier | '')}
+            >
+              <option value="" disabled>
+                Select tier...
+              </option>
               <option value="critical">critical</option>
               <option value="high">high</option>
               <option value="medium">medium</option>
@@ -135,7 +149,15 @@ export default function SupplierList() {
           </div>
           <div className="form-field">
             <label htmlFor="new-status">Status</label>
-            <select id="new-status" value={status} onChange={(e) => setStatus(e.target.value as SupplierStatus)}>
+            <select
+              id="new-status"
+              required
+              value={status}
+              onChange={(e) => setStatus(e.target.value as SupplierStatus | '')}
+            >
+              <option value="" disabled>
+                Select status...
+              </option>
               <option value="pending">pending</option>
               <option value="active">active</option>
               <option value="archived">archived</option>

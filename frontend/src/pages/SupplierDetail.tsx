@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
+  deleteSupplier,
   fetchAssessment,
   fetchDocuments,
   fetchQuestions,
   getSupplier,
   sendChat,
   submitAssessment,
+  updateSupplier,
   uploadDocument,
 } from '../api'
 import type { AnswerChoice, AssessmentResponse, Question, Supplier, SupplierDocument } from '../types'
@@ -26,6 +28,11 @@ export default function SupplierDetail() {
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editTier, setEditTier] = useState<'critical' | 'high' | 'medium' | 'low'>('medium')
+  const [editStatus, setEditStatus] = useState<'active' | 'pending' | 'archived'>('pending')
+  const navigate = useNavigate()
 
   const load = async () => {
     if (!supplierId) return
@@ -91,6 +98,52 @@ export default function SupplierDetail() {
     }
   }
 
+  const beginEdit = () => {
+    if (!supplier) return
+    setEditName(supplier.name)
+    setEditTier(supplier.tier)
+    setEditStatus(supplier.status)
+    setIsEditing(true)
+    setErr(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const saveSupplier = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!supplier || !supplierId) return
+    setBusy(true)
+    setErr(null)
+    try {
+      const updated = await updateSupplier(supplierId, {
+        name: editName,
+        tier: editTier,
+        status: editStatus,
+      })
+      setSupplier(updated)
+      setIsEditing(false)
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Update failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const removeSupplier = async () => {
+    if (!supplier || !supplierId) return
+    const ok = window.confirm('Delete supplier "' + supplier.name + '"? This cannot be undone.')
+    if (!ok) return
+    setBusy(true)
+    setErr(null)
+    try {
+      await deleteSupplier(supplierId)
+      navigate('/')
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Delete failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const ask = async (e: FormEvent) => {
     e.preventDefault()
     if (!input.trim() || !supplierId) return
@@ -146,7 +199,70 @@ export default function SupplierDetail() {
           )}
           {supplier.description && <p>{supplier.description}</p>}
         </div>
+        <div>
+          <button className="btn" type="button" onClick={beginEdit} disabled={busy}>
+            Edit supplier
+          </button>
+          <button className="btn danger" type="button" onClick={removeSupplier} disabled={busy}>
+            Delete supplier
+          </button>
+        </div>
       </header>
+
+      {isEditing && (
+        <form className="card form-create" onSubmit={saveSupplier}>
+          <p className="form-edit-banner muted small">
+            Editing supplier <strong>{supplier?.name}</strong>
+          </p>
+          <div className="form-field">
+            <label htmlFor="detail-edit-name">Name</label>
+            <input
+              id="detail-edit-name"
+              required
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="detail-edit-tier">Tier</label>
+            <select
+              id="detail-edit-tier"
+              value={editTier}
+              onChange={(e) => setEditTier(e.target.value as 'critical' | 'high' | 'medium' | 'low')}
+            >
+              <option value="critical">critical</option>
+              <option value="high">high</option>
+              <option value="medium">medium</option>
+              <option value="low">low</option>
+            </select>
+          </div>
+          <div className="form-field">
+            <label htmlFor="detail-edit-status">Status</label>
+            <select
+              id="detail-edit-status"
+              value={editStatus}
+              onChange={(e) => setEditStatus(e.target.value as 'active' | 'pending' | 'archived')}
+            >
+              <option value="pending">pending</option>
+              <option value="active">active</option>
+              <option value="archived">archived</option>
+            </select>
+          </div>
+          <div className="form-field">
+            <span className="form-field-label-gap" aria-hidden="true">
+              {'\u00a0'}
+            </span>
+            <div className="form-field-action">
+              <button type="button" className="btn" onClick={() => setIsEditing(false)}>
+                Cancel
+              </button>
+              <button className="btn primary" type="submit" disabled={busy}>
+                Save
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
 
       {err && <div className="alert error">{err}</div>}
 
