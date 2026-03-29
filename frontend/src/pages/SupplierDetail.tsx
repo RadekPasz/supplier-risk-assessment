@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { Link, useParams } from 'react-router-dom'
 import {
   fetchAssessment,
@@ -230,7 +231,13 @@ export default function SupplierDetail() {
           {chat.map((m, i) => (
             <div key={i} className={`msg ${m.role}`}>
               <div className="role">{m.role}</div>
-              <pre className="msg-body">{m.text}</pre>
+              {m.role === 'assistant' ? (
+                <div className="msg-body markdown-body">
+                  <ReactMarkdown>{m.text}</ReactMarkdown>
+                </div>
+              ) : (
+                <div className="msg-body user-msg">{m.text}</div>
+              )}
             </div>
           ))}
         </div>
