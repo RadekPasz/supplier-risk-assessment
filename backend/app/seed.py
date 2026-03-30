@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.assessment import AssessmentQuestion
 
-
 def _questions() -> list[dict]:
     rows: list[tuple[str, str, int]] = [
         (
