@@ -34,7 +34,8 @@ I chose FAISS over Chroma for this repo to avoid extra containers and heavy opti
 
 ## AI usage
 
-I used cursor as the main AI development tool for this project, as I don't have access to the paid version of claude. It did a great job at setting the structure of the project and implementing the core functionalities, but it struggled with 
+I used cursor as the main AI development tool for this project, as I don't have access to the paid version of claude. It did a great job at setting the structure of the project and implementing the core functionalities, but it struggled with details. There were parts of the web page design that required manual intervention, like misalignments in the UI or problems with the dropdown menus. Coding with cursor also required iterations, as at first it didn't implement some important features like deleting and editing suppliers. Finally, cursor also helped me with fixing bugs with SQLAlchemy that I encountered during the development process. 
+It was my first time using Cursor or a similar program and I found the process quite intuitive and simple. It didn't take too long to generate the answers and almost all of them were helpful. However, I imagine that implementing larger projects would require more manual intervention and time spent. 
 
 ## API overview
 
